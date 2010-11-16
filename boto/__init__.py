@@ -29,7 +29,7 @@ import logging
 import logging.config
 from boto.exception import InvalidUriError
 
-__version__ = '2.0b3'
+__version__ = '2.0b3sg1'
 Version = __version__ # for backware compatibility
 
 UserAgent = 'Boto/%s (%s)' % (__version__, sys.platform)
