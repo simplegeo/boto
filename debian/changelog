@@ -1,3 +1,1003 @@
+python-boto (2.0b3sg1-sg4) lucid; urgency=low
+
+  [ Mitch Garnaat ]
+  * Allow from_port, to_port to be specified on group authorizations,
+    while not breaking old code.
+  * Corrected a misspelled method name.  Fixes issue 36 on github.com
+
+  [ Chris Moyer ]
+  * Updated EC2 API to version 2010-07-01, all methods should be
+    backwards compatible. elbadmin script now has two new functions:
+    addl: Adds a new listener to an existing ELB  rml: Removes an
+    existing listener from an ELB
+
+  [ Mike Schwartz ]
+  * Changed S3Connection.get_all_buckets() to pass optional headers
+    argument to make_request()
+
+  [ Chris Moyer ]
+  * Fixed load balancer for new API
+
+  [ Mitch Garnaat ]
+  * Fixed issue 38 on github.
+  * Fixed a bug regarding bucket names containing periods as origins.
+    Fixes issue 478.
+  * Fixed a bug with the replace arg not being passed on properly.
+    Fixes issue 479.
+  * Added batch_delete_attributes method.  Doesn't seem to be working
+    correctly.  Awaiting further documentation.
+  * Working version of new batch delete request andsimple unit tests.
+  * Initial implementation of custom origins in CloudFront.
+  * WIP commit.  Not working yet.
+  * Trying to get basic authentication to work
+  * Fixed Authorization code.
+  * Fixed a typo bug.
+  * Moving a copy of jsonresponse from roboto over to boto.
+  * Basic CRUD operations working for hosted zones.
+  * Merging pull request 41 from bgreenlee.
+  * Snapshot of S3 MultiPart.  Mostly working, more clean up to day and
+    still a few methods to implement.  Had to completely rewrite the
+    utils.canonical_string function but it's much better now.
+  * Working version of S3 MultiPart upload.
+  * Adding methods for resource changes.
+  * Renaming module to be the final released name of the service.
+  * Adding some docstrings.
+  * Changing typo in docstrings.
+
+  [ Travis McLane ]
+  * add the Cache-Control header to the get_key method
+
+  [ Mitch Garnaat ]
+  * Updating the sphinx documentation templates to include route53 and
+    multipart stuff for s3.
+  * Adding gs and file modules to Sphinx documentation templates.
+  * Forgot to add boto.route53 to list of modules.
+
+  [ rlotun ]
+  * Added .gitignore. Skip .pyc and vim .swp files.
+
+  [ Mitch Garnaat ]
+  * AWS is offended by the white space preceding <?xml.  Also removed
+    debug output.
+  * Okay, this commit really does turn off the debug output.
+  * Updated README file with route53.
+
+  [ Barnaby Gray ]
+  * Small fixes for route53
+
+  [ James Dennis ]
+  * QuestionForm instance as question keyword was not handled correctly
+
+  [ Barnaby Gray ]
+  * Fix slip up in my fixes
+
+  [ Dmitry Konishchev ]
+  * Added support for NoDevice in RunInstances's block device mapping
+
+  [ rlotun ]
+  * Support for CloudWatch 2010-08-01 The major addition is the ability
+    to create alarms on metrics and have them perform actions when they
+    pass certain defined thresholds (currently this is limited to SNS
+    notifications). Other minor changes include the automatic conversion
+    of Timestamp types to python `datetime.datetime` objects.
+
+  [ Barnaby Gray ]
+  * Add support for paginating get_all_rrsets
+
+  [ Mitch Garnaat ]
+  * Added some info to docstrings.  Fixed some formatting issues.
+
+  [ rlotun ]
+  * Implementing remaining API calls in ELB. Adds support for creating
+    and deleting stickiness policies, and setting SSL certificate IDs on
+    lb listeners.
+  * Beginning of autoscale 2010-08-01 support. This includes the
+    deprecation of triggers, and the enabling of scheduled actions and
+    policies.
+
+  [ Mike Schwartz ]
+  * Mods so if BOTO_CONFIG environment variable is set we only load that
+    config file, rather than loading merge of config locations.
+
+  [ rlotun ]
+  * More work on implementing autoscale calls. Added support for getting
+    and setting policies and metric collection types as well as a few
+    bugfixes.
+
+  [ Mike Schwartz ]
+  * Current state of pluggable auth: integrated into boto/connection.py;
+    still needs to be integrated into other parts of boto
+
+  [ Alexey Komissarouk ]
+  * Added the 'number hits approved' and 'adult' requirements to mturk
+    qualifications.  Descriptions and codes taken from
+    http://docs.amazonwebservices.com/AWSMturkAPI/2008-08-
+    02/index.html?ApiReference_QualificationRequirementDataStructureArti
+    cle.html -AMK
+
+  [ Jason R. Coombs ]
+  * Added test to do a simple caller instruction (fails due to signature
+    version)
+  * FPSConnection now uses SignatureVersion 2 (now required by Amazon).
+
+  [ Mitch Garnaat ]
+  * Fixed a bug and added support for QSA for S3.
+  * Slight refactoring to make it easier to remove other uses of
+    self.hmac.
+
+  [ Greg Taylor ]
+  * Add the consistent_read kwarg to sdb.Domain.get_item() and added a
+    Sphinxd docstring.
+  * gs.rst incorrectly referenced boto.gs.resumable_download_handler
+    instead of boto.gs.resumable_upload_handler. Fixed.
+  * Fixing header underlines to be the correct length.
+  * Looks like in file.rst, boto.file.bucketlistresultset was re-named
+    to boto.file.simpleresultset but never updated in the docs. Fixed.
+  * Minor typo.
+  * More underline headline fixes.
+  * Tracked down a really mis-leading REST warning.
+  * Found another tricky REST docstring issue.
+  * Finally figured out the rest of the REST errors in docstrings. Fixed
+    those, along with some formatting, spelling, and some tags that look
+    like they were left over from an old doc system.
+
+  [ Mitch Garnaat ]
+  * Fixing up remaining references to hmac.
+
+  [ MaximVeksler ]
+  * Make fetch_file consider username & password when accessing S3
+
+  [ Maxim Veksler ]
+  * Allow ShellCommand to throw Exception on shell command failue
+
+  [ garnaat ]
+  * Merge branches 'gtaylor-sdb_get_item_consist_read' and 'master'
+
+  [ John Walsh ]
+  * Add the ability to specify the working directory for a command to be
+    run, and use that to do git version updates for boto in the
+    bootstrap code.
+
+  [ Mitch Garnaat ]
+  * Reworking the auth handlers so they are selected based on capability
+    rather than other, more arbitrary criteria.
+  * Got route53 authentication working with plugin mechanism.
+
+  [ Seth Golub ]
+  * Added notify_workers to mturk.connection, to support sending
+    messages to Mechanical Turk workers.
+
+  [ Chris Moyer ]
+  * Fixed cfadmin to work with new S3Origin stuff
+
+  [ Greg Taylor ]
+  * Fix a 2-space indent.
+  * The SQS intro mentions sqs.queue.dump(), but in sqs.queue, it's
+    actually called dump_(), as per issue #40. This would be a highly
+    unusual method name, so I'm assuming this should be dump(), like the
+    tutorial says. This fix makes the module match the tutorial.
+  * Removed time.sleep() in favor of using the consistent_read keyword
+    on all queries. Brought the test runtime down to 4.5 seconds from 45
+    seconds on my faster internet connection. Should also eradicate any
+    chance of the 10 second sleeps time not being long enough (as
+    unlikely as it may be).
+  * Start picking up docstrings on constructors. I see we have
+    docstrings for some constructors, but the previous config didn't
+    allow for them to be displayed. This should be a barely visible
+    change, but should add some extra documentation that was previously
+    hidden.
+  * Lots and lots of SDB documentation. The sdb module API docs are now
+    reasonably descriptive. We're not done yet, though.
+  * Made the following methods on boto.sdb.connection.SDBConnection
+    private: * build_name_value_list * build_expected_value *
+    build_batch_list * build_name_list
+  * Documented SDBConnection.set_item_cls()
+
+  [ John Walsh ]
+  * Add missing argument specification for cwd argument.
+
+  [ Mitch Garnaat ]
+  * Lots of small changes to accomodate plug-in authentication
+    mechanism.  Still on branch for now.
+
+  [ moranski ]
+  * Changed statistic name "Samples" to "SampleCount".
+
+  [ garnaat ]
+  * Manually incorporating small change from pull request 67.
+
+  [ Mitch Garnaat ]
+  * Few more tweaks to pluggable auth branch.
+  * Adding sdb to list of capabilities.
+  * Adding the canonical names of each of the auth handlers to list of
+    capabilities.
+  * Fixing a bug in HmacKey regarding resolution of credentials.
+
+  [ garnaat ]
+  * Fixed a typo bug in Instance class.  Fixes issue 487.
+  * Adding a few missing attributes to the Image object.
+
+  [ Chris Moyer ]
+  * Starting to add some wrapper XML objects for Route53. It's now easy
+    to add a Resource Record, simply create a new ResourceRecordSets
+    object (from boto.route53.record), passing in a connection and the
+    Zone ID:   changes = ResourceRecordSets(conn, hosted_zone_id,
+    optional_comment) Then add any changes you want:   record =
+    changes.add_change("CREATE", "foo.example.com.", "CNAME") And don't
+    forget to set the values for this new record, in this case where the
+    foo.example.com. CNAME points to:   record.add_value("my-load-
+    balancer.elb.amazonaws.com") You can add multiple values by
+    continuing to call "add_value":   record.add_value("my-second-
+    lb.elb.amazonaws.com") Once you're done, commit the changes:
+    changes.commit()
+
+  [ John Walsh ]
+  * Correct the order that the device name and the mount point are
+    written out to the fstab file.
+
+  [ Mitch Garnaat ]
+  * Fixing the handling of auth_path in HmacAuthV1Handler.  Cleaning up
+    a bit in cloudfront.
+
+  [ Dmitry Konishchev ]
+  * POST is enabled for ModifyInstanceAttribute because userData can be
+    too long for GET
+
+  [ garnaat ]
+  * Making ELBConnection region-aware
+  * Adding section in S3 tutorial explaining locations.  Also added the
+    ap-southeast-1 location to the Location object in
+    boto.s3.connection.
+  * Fixing a formatting typo in the S3 tutorial.
+
+  [ Dmitry Konishchev ]
+  * Fixed a bug due to which EC2Connection.allocate_address() always
+    throwed an exception
+
+  [ garnaat ]
+  * Add a check for part number<1 because we love to start counting at
+    zero, don't we?
+
+  [ Mike Schwartz ]
+  * Fix for recent pluggable auth mods, for case where requests go
+    through a proxy
+
+  [ garnaat ]
+  * Adding the SetInstanceHealth request.  Untested at this point.
+
+  [ Mike Schwartz ]
+  * Fixes for various pluggable auth problems: 1) incorrect path rewrite
+    when accessing storage via a proxy. 2) incorrent call signature to
+    AWSAuthConnection.build_base_http_request from from resumable upload
+    handler. 3) missing auth_path parameter, which resulted in various
+    split attempts on "NoneType" failures.
+
+  [ Ian Kallen ]
+  * corrected doc string for update_group (it doesn't look like it
+    adds/removes)
+
+  [ Seth Golub ]
+  * Added methods for some operations: create_qualification_type
+    update_qualification_type get_qualification_type
+    assign_qualification
+
+  [ Jerome Petazzoni ]
+  * Add support for HTTPS ELBs (SSL done at the ELB)
+
+  [ Keith Fitzgerald ]
+  * ignore egg-info output
+  * upgrade to use now required version 2 signature
+  * transaction amount required for URL
+
+  [ Mitch Garnaat ]
+  * Fixed a typo bug in get_all_subnets method's contruction of params.
+    See github issue #6.
+  * Making the construction of the glob pattern more friendly to non-
+    posix environments.
+
+  [ Chris Moyer ]
+  * Updated SDB manager to allow for itemName() checks
+
+  [ John Walsh ]
+  * Use the configured boto location when doing a git pull in the
+    bootstrap code.
+  * Deal with attachment failures, and log where all volumes in the
+    system as well as where they're currently mounted.
+  * Syntax correction.
+  * Halt the processing of all startup scripts if a script raises an
+    exception.
+  * Add the rest of the missing lines that occured through a series of
+    cut and paste errors.
+  * Fixed indent problem.
+
+  [ unknown ]
+  * Signed-off-by: unknown <Dudemeister@.(none)>Added methods for mturk
+    operations: dispose_qualification_type search_qualification_types,
+    get_qualification_requests, grant_qualification,
+    revoke_qualification. Created data structures for
+    QualificationRequest QualificationType (based on
+    BaseAutoResultElement). Hooked those classes to the methods which
+    were created. Also modified create_qualification_type
+    update_qualification_type get_qualification_type
+    assign_qualification to return the appropriate data structures
+    (instead of just an empty resultset with attributes all over the
+    place). Slight change to mturk/qualification.py to make sure
+    'IntegerValue' is not present when comparator is 'Exists'.
+
+  [ Mitch Garnaat ]
+  * Adding support for S3 response headers.
+
+  [ John Walsh ]
+  * Remove the recording and checking of the ec2.attach_volume call. The
+    call will either return a good status (attaching or attached) or
+    will throw an exception, so there's no need to check the return
+    value. Change the time delay on checing the mount status to two
+    seconds.
+
+  [ garnaat ]
+  * Fixes issue 489.  Also cleaned up some docstrings and other PEP8
+    stuff.
+
+  [ Chris Moyer ]
+  * Allow "__id__" to be used instead of itemName() in queries
+
+  [ John Walsh ]
+  * Tag all snapshots with the name of the volume they're a snapshot of
+    so we can keep track of the snapshots as a volume is swapped out for
+    larger volumes.
+  * Repeat the attach volume call if it fails with ec2 complaining that
+    the currently running instance is not running.
+  * Fix typo.
+
+  [ Dmitry Konishchev ]
+  * All EC2 requests has been changed from GET to POST It's necessary
+    when you have a lot number of instances, volumes, snapshots, etc.,
+    because in this case the request's body can be too long for GET.
+
+  [ John Walsh ]
+  * Make /tmp world writable even if we didn't have to move the
+    ephemeral store there.
+
+  [ cariaso ]
+  * prevents timezone errors
+
+  [ Mike Schwartz ]
+  * Implemented support for adding Google Storage group-by-email grants.
+
+  [ Stanislav Ievlev ]
+  * Fixing work with unicode strings within EC2Connection class. All
+    values will be correctly quoted in the lower level.
+
+  [ Jakub Vysoky ]
+  * fully long ip is 15 chars - but we want delim 192.168.192.168 is 15
+    chars
+  * show private ip option
+
+  [ Chris Moyer ]
+  * Updated Route53 connections to use the same XML parsing used
+    elsewhere in boto for RRsets. This is a backwards incompatible
+    change to the get_rrsets call in route53 connection, but it makes
+    everything more consistent with the other modules. Also added a
+    route53 command line client to make workging with Route53 a little
+    easier.
+
+  [ garnaat ]
+  * First pass at a fix for problems with eucalyptus services caused by
+    the pluggagle auth code.
+  * A better fix for the auth problem.  Gets rid of the _server_name
+    method in auth.py which really shouldn't have been there in the
+    first place.  Assumes that the host attribute of the HTTPRequest
+    object will have the correct host name already.
+  * moving connection classes to connection.py files for consistency.
+
+  [ Mike Schwartz ]
+  * Fixed boto.s3.Key class' call into resumable download handler (got
+    broken during some of the pluggable auth refactoring)
+
+  [ garnaat ]
+  * Allow additional args to be passed to auth handlers, if desired.
+
+  [ John Walsh ]
+  * Add the trim_snapshots() method to ec2/connection.py, and correct
+    local object references in createSnapshot.
+
+  [ Blake Maltby ]
+  * Fixed typo in param name in set_lb_listener_SSL_certificate
+
+  [ Chris Moyer ]
+  * Added missing "help" function for the route53 command line script
+  * Added paging support directly into the ResourceRecordSets object
+  * Fixed up route53 command line script to include a delete method and
+    properly print out zone info on creation
+
+  [ John Walsh ]
+  * Remove debugging code.
+
+  [ Harry Marr ]
+  * Initial SES connection class, SendEmail implemented
+  * Added support for HTML emails via format param
+  * Added support for sending raw messages
+  * Covered other SES API methods
+  * Added connect_ses shortcut function
+  * Moved connection class to connection.py
+  * Added SES package to setup.py
+  * Refactor - private methods, docstrings
+
+  [ Victor Trac ]
+  * Fixing typo in Issue #93
+
+  [ John Walsh ]
+  * Fixed typos.
+
+  [ Chris Moyer ]
+  * Patch: https://github.com/boto/boto/pull/96
+
+  [ Seth Golub ]
+  * Fixed bug where Requirement objects didn't include an IntegerValue
+    parameter if the value was zero.
+  * Bug fix: Event must not assume that AssignmentId is always present.
+    (HITExpired events, for example, do not have this field.)
+  * Added get_qualifications_for_qualification_type()
+
+  [ Chris Moyer ]
+  * Updated DateProperty to auto-convert from datetime
+
+  [ John Walsh ]
+  * Retry boto git pull commands in bootstrap up to 10 times before
+    giving up.
+
+  [ Chris Moyer ]
+  * Removed Model.lookup method, leftovers from another time
+  * Fix for https://github.com/boto/boto/issues#issue/99
+
+  [ garnaat ]
+  * Bumping version number for 2.0 beta 4 release.
+  * Removing test for newline character in key name for GS.
+
+  [ Chris Moyer ]
+  * Check for not like on op filter
+
+  [ Mitch Garnaat ]
+  * Adding initial cut at s3 website support.
+  * get_website_configuration now returns a dict created by
+    jsonresponse.
+
+  [ Chris Moyer ]
+  * Added "del_record" command to route53 command line utility
+
+  [ winhamwr ]
+  * Fixed invalid list param in elb.describe_inestance_health
+  * Fixed argument mismatch between rds.dbsecuritygroup.revoke and
+    rdsconnection.revoke_dbsecurity_group
+
+  [ Keith Fitzgerald ]
+  * fixed typo setting origin_access_identity
+
+  [ Mitch Garnaat ]
+  * Fixed a docstring.
+
+  [ Rytis Sileika ]
+  * Fixed an invalid parameter bug (ECS) #102
+
+  [ Roberto Gaiser ]
+  * elb connect_to_region use the same syntax as ec2 connect_to_region
+  * .gitignore fixed to ignore build and dist
+
+  [ Chris Moyer ]
+  * Updated to prevent issues with empty response bodies
+
+  [ Mitch Garnaat ]
+  * Merging some changes to jsonresponse from roboto to boto.
+
+  [ Rytis Sileika ]
+  * Fix ItemSet for responses that do not contain TotalResults and
+    TotalPages elements
+
+  [ Mac Morgan ]
+  * made build_post_form_args method on S3connection obey calling_format
+    what constructing action url
+
+  [ Blake Maltby ]
+  * Only include OriginAccessIdentity element if it's been set
+
+  [ flipkin ]
+  * self.id should be assigned the invalidation request id and not the
+    built-in method id()
+
+  [ Gleicon Moraes ]
+  * added a tentative get_website_endpoint to bucket to translate from
+    location constraint to website endpoint
+
+  [ Jon Colverson ]
+  * Fixed the website endpoint hostnames. The method used the
+    connection.host attribute as part of the name, which was
+    "s3.amazonaws.com" whereas the website endpoint hostnames end with
+    just "amazonaws.com" (without the "s3." bit):
+    http://docs.amazonwebservices.com/AmazonS3/latest/dev/WebsiteEndpoin
+    ts.html#top
+  * Removed references to update() arguments that no longer exist.
+
+  [ Mitch Garnaat ]
+  * A few small changes to website functionality in bucket.py.  Mainly
+    cosmetic.
+
+  [ Lucas Hrabovsky ]
+  * Add support for account alias API calls.
+
+  [ Mitch Garnaat ]
+  * Changing URL references to use a Google shortened URL to aid in code
+    formatting.  Also reworked get_account_alias slightly to avoid going
+    past column 80 for complicated statement.
+
+  [ Roberto Gaiser ]
+  * cloudwatch region endpoint changes
+
+  [ Mitch Garnaat ]
+  * Adding ability to pass in list of region names to get_all_regions.
+  * Added a connect_ia method to create a connection to the Internet
+    Archive's s3-like API.
+
+  [ James Downs ]
+  * Change the l_list tuple to properly add SSL cert info if protocol is
+    HTTPS
+
+  [ garnaat ]
+  * Allow a passphrase to be passed to underlying SSH client in
+    manage.server.Server.  Also enable connection retries on 111 socket
+    errors.
+
+  [ Greg Taylor ]
+  * Adding mention of the IRC channel on the front page of the docs.
+
+  [ garnaat ]
+  * Add info about IRC channel to README.
+
+  [ Roberto Gaiser ]
+  * small fix on the XML Node name returned by AWS
+
+  [ Keith Fitzgerald ]
+  * base64 encode user-data for autoscale groups and issue a POST
+    instead of a GET for creating a launch configuration.
+  * rolling back the earlier introduction of b64 encoding user-data in
+    autoscale launch configs. user-data is still sent via POST instead
+    of GET
+
+  [ Chris Moyer ]
+  * Changed sequence to not auto-delete
+
+  [ Roberto Gaiser ]
+  * Auto Scaling Interface with connect_to_region
+
+  [ Mitch Garnaat ]
+  * The Tag value should always be included in the params, even if the
+    value is the empty string.
+  * Trying to pretty up the README file a bit.
+  * Renaming to .markdown.
+
+  [ garnaat ]
+  * Reorganizing the existing test code.  Part of a long-term project to
+    completely revamp and improve boto tests.
+  * Updating setup.py to include the new test locations.
+  * monitor_instance and unmonitor_instance should really accept
+    multiple instance IDs, not just one.  Add new capability without
+    breaking old code.
+
+  [ Roberto Gaiser ]
+  * cloudwatch fix in progress
+  * cloudwatch xml fix
+
+  [ garnaat ]
+  * Removing some debug print statements and commented lines.
+
+  [ Keith Fitzgerald ]
+  * do base64 encode userdata, amazon not accepting otherwise
+
+  [ sanbornm ]
+  * Added support for returnpath and reply-to addresses
+  * Added docstring explanation for return_path and reply_addresses
+
+  [ Stanislav Ievlev ]
+  * force cast to ASCII string to avoid a double url encoding when
+    bucket name is a unicode value (connection.py contains a code for
+    urlencoding of unicode headers)
+
+  [ Hinnerk ]
+  * Added sdb.db.property.TimeProperty.
+
+  [ Pierre Riteau ]
+  * Fix typo in EMR request parameters: s/memeber/member/ Apparently AWS
+    accepted requests with the typo, but the API documentation says it
+    should be member.
+
+  [ Mitch Garnaat ]
+  * Fixing a bug in new versions of monitor_instances and
+    unmonitor_instances.  Variable param was not initialized.
+  * Adding additional checking when attempting to complete a multipart
+    upload.  Some errors are reported in the body of the response even
+    though the HTTP response is 200.
+
+  [ Steve Howard ]
+  * Fix reduced redundancy support in multipart uploads In multipart
+    uploads, the storage class is specified when initiating the upload,
+    not when uploading individual parts.  See:
+    http://docs.amazonwebservices.com/AmazonS3/latest/API/index.html?mpU
+    ploadInitiate.html
+    http://docs.amazonwebservices.com/AmazonS3/latest/API/index.html?mpU
+    ploadUploadPart.html So add a reduced_redundancy kwarg to
+    Bucket.initiate_multipart_upload() and remove it from
+    MultiPartUpload.upload_part_from_file, ensuring that method does
+    *not* specify reduced redundancy storage. Signed-off-by: Steve
+    Howard <steve@thumbtack.com>
+
+  [ Mitch Garnaat ]
+  * Added some docstring info to the initiate_multipart_upload method.
+
+  [ John Walsh ]
+  * Deal with possible race condition if snapshot trimming code is run
+    on two different servers at the same time.
+  * Add the configurable invocation of the tag based snapshot cleanup
+    instead of the manage.Volume based snapshot cleanup. Defaults to the
+    old manage.Volume based snapshot cleanup.
+  * Correct typo.
+  * Correct typo.
+
+  [ garnaat ]
+  * Fixing a typo bug in unmonitor_instances.
+
+  [ Mike Schwartz ]
+  * Fix handling of non-restartable transfers; and fix broken test code
+    refs.
+
+  [ John Walsh ]
+  * Don't create the ebs snapshot if the xfs_freeze command fails.
+
+  [ Mike Schwartz ]
+  * Mods to retry logic for POST part of resumable uploads
+
+  [ Mitch Garnaat ]
+  * Initial version of runtime support for roboto tools.
+
+  [ Jon Colverson ]
+  * Added support for the <InProgressInvalidationBatches> element of
+    CloudFront distributions.
+
+  [ Mitch Garnaat ]
+  * Fixing a few small issues with the roboto Param class.
+
+  [ Seth Golub ]
+  * Allow NotifyWorkers to send to multiple worker IDs.  (API allows up
+    to 100.)
+
+  [ garnaat ]
+  * bumping version number to 2.0b5.
+
+  [ sanbornm ]
+  * Fixed bug where send_raw_email required destinations addresses
+    causing bcc header in raw message to be ignored
+
+  [ Mitch Garnaat ]
+  * Fixing so class variables always being with an upper case letter to
+    avoid confusion.
+  * Don't call process_args in constructor.  Fix reference to self.name.
+  * Adding additional standard options.
+  * Fixing reference to filters.
+  * Combine standard options into an option group.
+  * Fixing typo bug in boto.s3.acl.Policy
+  * Incorporating a patch to handle obscure bug in apache/fastcgi.  See
+    http://goo.gl/0Tdax.
+  * Simplify the output formatting and allow the generic formattter to
+    be easily overridden to customize output.
+  * Add support for boolean params.  Make optparse options and args
+    available on instance.
+  * Removed the explicit Name class attribute.  Just use the name of the
+    class itself.
+  * Changing email address to one that actually works.
+  * Add a file param type.  Fix issue with an empty Response attribute.
+  * Add a RequiredParamError exception.
+  * Fixed an issue with extra headers in generated URLs.  Fixes
+    http://code.google.com/p/boto/issues/detail?id=499
+  * Initialize self.default properly in constructor.
+  * Incorporating a patch from AWS to allow security groups to be
+    tagged.
+  * CreateQualificationType request was using TestDuration as a param
+    rather than TestDurationInSeconds.  Fixes github issue 142.
+
+  [ John Walsh ]
+  * Sort the backup times before deleting snapshots to be sure the time
+    order is correct between the timing of the first snapshot of the
+    month and the timing of the snapshot from four weeks ago.
+  * Rolled back the APIVersion for the ec2 connection so we get instance
+    tags. For reasons yet unknown, the more current version
+    specification causes the XML persing for get_all_instances to ignore
+    anything between a close item tag (</item>) and the next open item
+    tag. This causes the code not to process the tag information, so we
+    don't get instance tags. This fix is a necessary temporary step for
+    our use of boto. A permanent fix is obviously required so the
+    interface version can be upgraded.
+
+  [ Jann Kleen ]
+  * fixed hostname mixup (subdomains were in wrong order)
+  * autoscale connection now uses config options as defined in
+    documentation
+
+  [ Mitch Garnaat ]
+  * Fixed indentation error in do_cli.
+
+  [ Jann Kleen ]
+  * started removing legacy code
+  * removed more legacy code
+  * documentation formatting
+  * added max_records parameters and a bit of documentation
+  * still merging changes
+  * removed legacy code again
+  * renamed function to appropriate name
+  * tiny bugfixes
+  * removed another duplicate function from merging
+
+  [ Nick Tarleton ]
+  * Fix documentation for instance_initiated_shutdown_behavior
+
+  [ Mitch Garnaat ]
+  * Fixed indentation error in do_cli.
+
+  [ Nick Tarleton ]
+  * Fix documentation for instance_initiated_shutdown_behavior
+
+  [ Jann Kleen ]
+  * corrected spelling mistake in function call
+  * shutdown_instances method didn't set desired_capacity to 0 which
+    caused an error
+  * fixed bug in deletion of autoscaling_groups
+
+  [ Chris Moyer ]
+  * Added "expected_value" to all put method and all manager's
+    "save_object" methods. Added "encode_string" and "decode_string" to
+    make sure the string is unicode for SDB
+
+  [ Michael Thompson ]
+  * Improve formatting when printing zone records and listing commands
+  * Add a change_record command to bin/route53
+  * Setting max items doesn't correctly limit the records printed as the
+    record set is truncated and the pagination feature results in an
+    additional request to AWS to get the rest of the results.
+
+  [ John Walsh ]
+  * Deal with the groupSet element that appears in the instanceSet
+    element in the DescribeInstances response. In the 2011-01-01 ec2 API
+    (which this commit also switches back to), there's a groupSet
+    element within the instancesSet element. The groupSet element is not
+    documented in http://docs.amazonwebservices.com/AWSEC2/2011-01-
+    01/APIReference/, but it does appear in the examples on that page,
+    and it is sent by Amazon. Without this change, the closing </item>
+    tag within the groupSet tag within the instancesSet tag was
+    interpreted by boto.handler.XmlHandler as the close item tag for the
+    instance, which caused the returned instance not to have any of the
+    data that appears later in the XML element, including the tags. This
+    tag causes the SML processing to recognize the embedded groupSet tag
+    and continue.
+
+  [ garnaat ]
+  * Fixed an issue with IAM responses no longer pythonizing the element
+    names.
+  * Adding support for enum param types.
+  * Fixed a bug introduced in last commit.  The pythonize_name param was
+    not being passed to all nested Elements.
+
+  [ Fabian Topfstedt ]
+  * Fixed copy_key error requesting ACLs from the wrong bucket
+  * removed three lines that shouldn't be there
+
+  [ ryancustommade ]
+  * Changes so both a text and html version of the email can be sent out
+    in the same messages. Backwards compatible
+
+  [ garnaat ]
+  * fixing small whitespace issues.
+
+  [ Chris Moyer ]
+  * Updated lss3 to allow for prefix based listing (more like actual ls)
+    Also updated s3.prefix.Prefix to inherit from object to allow us to
+    do object-y things.
+  * Fixed last checkin, apparently I'm bad at git.
+
+  [ John Walsh ]
+  * In bootstrap, run apt-get update and apt-get upgrade if so
+    configured.
+
+  [ garnaat ]
+  * Removing boto.sdb.persist module.  This is no longer supported and
+    has been superceded by boto.sdb.db.
+
+  [ John Walsh ]
+  * Correct test for running apt-get update / upgrade in bootstrap.py
+  * Doh. Correct typo on boto.config
+  * Move the apt-get update / upgrade stuff to startup.py where it will
+    get run without new amis.
+
+  [ Louis R. Marascio ]
+  * accept metadata when initiating a multipart upload - an optional
+    metadata dict may be provided, and if so will be merged with the
+    request headers setting the metadata key/values on the resulting key
+    from   the multipart upload
+
+  [ John Walsh ]
+  * Add missing import statement in the ebs installer.
+
+  [ Mitch Garnaat ]
+  * Incorporating patch from daviddpark to fix security group
+    copy_to_region method.  See issue
+    http://code.google.com/p/boto/issues/detail?id=502 for details.
+
+  [ Mike Schwartz ]
+  * Removed HOME environment variable dependency in config handler,
+    simplifying Windows installation.
+
+  [ Pierre Riteau ]
+  * Use the unversioned streaming jar symlink provided by EMR This makes
+    streaming steps work with both 0.18 and 0.20 Hadoop versions.
+    Without this fix streaming steps run by a jobflow with
+    hadoop_version='0.20' fail.
+
+  [ Jann Kleen ]
+  * added missing __init__.py file in tests folder
+  * added max_records option to get_all_policies()
+  * added some documentation
+  * DescribeAutoScalingInstances returns a list of objects
+  * added copyright to modified file
+
+  [ rlotun ]
+  * Add newline.
+  * Simple autoscale unit tests and fixes.
+  * Added some missing autoscale API calls.
+  * Parse all times as datetime objects.
+
+  [ Jann Kleen ]
+  * two empty lines between classes
+  * one empty line between functions
+  * added parameter description to ScalingPolicy
+  * added scheduled.py and policy.py to documentation index
+
+  [ rlotun ]
+  * Small fixes and copyright updates.
+  * Removed duplicated method definition. Also, various pyflakes fixes
+    for unused imports.
+
+  [ Keith Fitzgerald ]
+  * autoscale userdata needs to be base64 encoded.
+  * we must POST autoscale user-data, not GET. otherwise a HTTP 505
+    error is returned from AWS. see:
+    http://groups.google.com/group/boto-
+    dev/browse_thread/thread/d5eb79c97ea8eecf?pli=1
+
+  [ rlotun ]
+  * Support for older keyword arguments in group creation.
+
+  [ Mitch Garnaat ]
+  * Fixed a bug with doubling up the path specifier for euca requests.
+  * Removing the awsify method, no longer needed.
+  * Some fixes in handling of environment variables and filters.
+  * Checking in some changes to handle args.
+  * Correctly handle default value.
+
+  [ Nick Tarleton ]
+  * IAM documentation: remove inaccurate 'new'
+
+  [ Mitch Garnaat ]
+  * Removing debug print statement.
+  * Allow APIVersion to be overridden explicitly via a param to the
+    constructor.
+  * Fixing bug in handling of default values.
+  * Allow additional args to be passed to send and merge those with
+    self.args.
+
+  [ Chris Moyer ]
+  * Updated cfadmin to optionally take arguments from STDIN for
+    invalidation, Also fixed tabs
+  * BOTO_ENV should append to the config locations, not replace them
+
+  [ Mike Schwartz ]
+  * Mod to GS ACL class to make polymorphic ACL access somewhat easier.
+
+  [ John Walsh ]
+  * Remove the apt-get upgrade code. For reasons unknown, in Ubuntu
+    10.04, if you have Tomcat installed, running apt-get upgrade from
+    within the startup scripts starts Tomcat6, even if there are no
+    tomcat startup script links in /etc/init.d/rc2.d. Apache is not
+    started, only Tomcat. Rather than hacking something in to boto to
+    shutdown Tomcat if it's running and shouldn't be, this operation
+    will be handled outside of boto.
+
+  [ rlotun ]
+  * Fix parameters and docstrings for an Autoscale group.
+  * Bugfix to healthcheck parameters and docstring fix.
+
+  [ Chris Moyer ]
+  * Updated boto.config to allow for BOTO_PATH, and to re-work how $HOME
+    is handled (or not handled) to make boto work on Windows platforms
+    again
+
+  [ Mitch Garnaat ]
+  * Removing 'except foo as bar' syntax so things work in Python 2.5.
+
+  [ Chris Moyer ]
+  * Fixed BOTO_CONFIG env checking thing.. didn't quite reverse that
+    properly
+
+  [ Mike Schwartz ]
+  * Changed Key class to allow enabling payload debug dumping when debug
+    level is set above 3.
+
+  [ garnaat ]
+  * Adding a temporary patch to print a version string.
+
+  [ rlotun ]
+  * Fix to autoscale policy creation and launch config name parsing.
+    Closes #154
+  * Re-add autoscale region connection code. Closes #153
+
+  [ Cory Mintz ]
+  * Support UTF-8 messages.
+
+  [ garnaat ]
+  * Tweaking code to remove line > 80 chars
+
+  [ Mitch Garnaat ]
+  * Fixes http://code.google.com/p/boto/issues/detail?id=506
+  * Fixes http://code.google.com/p/boto/issues/detail?id=508
+
+  [ Chris Moyer ]
+  * Updated sdbmanager to encode the expected_value
+
+  [ garnaat ]
+  * Reworking the authorize/revoke methods to provide both the new style
+    and old style as public methods.
+
+  [ David Park ]
+  * Support for ap-northeast-1 region Committer: David Park
+    <daviddpark@gmail.com>
+
+  [ Matt Singleton ]
+  * _build_list_params() handles unicode strings too
+
+  [ Louis R. Marascio ]
+  * Specify a reasonable socket timeout for httplib - httplib uses an
+    indefinite (or very, very large) timeout by default, meaning
+    socket operations may take a very long time. Reasonable web requests
+    should   have their sockets established within seconds. New
+    connections created with   httplib can override this indefinite
+    timeout by specifying a more reasonable   timeout in seconds. - This
+    commit specifics a default timeout of 5 seconds for httplib socket
+    operations. It also allows the overriding of this timeout by
+    specifyin a   configuratio option, http_socket_timeout, in the Boto
+    config file.
+  * timeout now only applies to Python 2.6 and up - Check Python version
+    in constructor and build a kwargs dict that will be   used to
+    specify timeout if Python is 2.6 and above. - Python versions prior
+    to 2.6 should see now change and continue to work.
+  * timeout now retains legacy default behavior - if no timeout is
+    specified in configuration, no timeout will be supplied to   httplib
+    and the legacy default (infinite) will be used
+
+  [ Greg Taylor ]
+  * Fixing Sphinx warnings and errors. Warnings/errors in one module can
+    lead to seemingly random warnings/errors in other modules, we should
+    probably be more vigilant about not introducing new errors.
+
+  [ garnaat ]
+  * Merging doc changes and fixing a couple PEP8 issues.
+
+  [ Jann Kleen ]
+  * in python < 2.7, version_info is no named tuple
+
+  [ Chris Moyer ]
+  * Fixed the change that broke SDB, added comma before the new region
+    info addition so SDB works again.
+  * Fixed SQS region imports too
+
+  [ SimpleGeo Nerds ]
+
+ -- SimpleGeo Nerds <nerds@simplegeo.com>  Thu, 14 Apr 2011 18:19:12 +0000
+
 python-boto (2.0b3sg1-sg3) lucid; urgency=low
 
   [ Ben Standefer ]
