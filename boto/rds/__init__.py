@@ -60,7 +60,6 @@ class RDSConnection(AWSQueryConnection):
     DefaultRegionName = 'us-east-1'
     DefaultRegionEndpoint = 'rds.amazonaws.com'
     APIVersion = '2009-10-16'
-    SignatureVersion = '2'
 
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None,
                  is_secure=True, port=None, proxy=None, proxy_port=None,
@@ -74,6 +73,9 @@ class RDSConnection(AWSQueryConnection):
                                     is_secure, port, proxy, proxy_port, proxy_user,
                                     proxy_pass, self.region.endpoint, debug,
                                     https_connection_factory, path)
+
+    def _required_auth_capability(self):
+        return ['rds']
 
     # DB Instance methods
 
@@ -702,8 +704,8 @@ class RDSConnection(AWSQueryConnection):
             params['CIDRIP'] = urllib.quote(cidr_ip)
         return self.get_object('AuthorizeDBSecurityGroupIngress', params, DBSecurityGroup)
 
-    def revoke_security_group(self, group_name, ec2_security_group_name=None,
-                              ec2_security_group_owner_id=None, cidr_ip=None):
+    def revoke_dbsecurity_group(self, group_name, ec2_security_group_name=None,
+                                ec2_security_group_owner_id=None, cidr_ip=None):
         """
         Remove an existing rule from an existing security group.
         You need to pass in either ec2_security_group_name and
@@ -737,6 +739,10 @@ class RDSConnection(AWSQueryConnection):
             params['CIDRIP'] = cidr_ip
         return self.get_object('RevokeDBSecurityGroupIngress', params, DBSecurityGroup)
 
+    # For backwards compatibility.  This method was improperly named
+    # in previous versions.  I have renamed it to match the others.
+    revoke_security_group = revoke_dbsecurity_group
+    
     # DBSnapshot methods
 
     def get_all_dbsnapshots(self, snapshot_id=None, instance_id=None,

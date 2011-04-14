@@ -1,4 +1,5 @@
 # Copyright (c) 2010 Mitch Garnaat http://garnaat.org/
+# Copyright (c) 2010, Eucalyptus Systems, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the
@@ -20,17 +21,6 @@
 # IN THE SOFTWARE.
 
 import xml.sax
-
-def pythonize_name(name):
-    s = ''
-    if name[0].isupper:
-        s = name[0].lower()
-    for c in name[1:]:
-        if c.isupper():
-            s += '_' + c.lower()
-        else:
-            s += c
-    return s
 
 class XmlHandler(xml.sax.ContentHandler):
 
@@ -63,11 +53,13 @@ class XmlHandler(xml.sax.ContentHandler):
 class Element(dict):
 
     def __init__(self, connection=None, element_name=None,
-                 stack=None, parent=None, list_marker='Set'):
+                 stack=None, parent=None, list_marker='Set',
+                 item_marker=('member', 'item')):
         dict.__init__(self)
         self.connection = connection
         self.element_name = element_name
         self.list_marker = list_marker
+        self.item_marker = item_marker
         if stack is None:
             self.stack = []
         else:
@@ -89,13 +81,15 @@ class Element(dict):
     def startElement(self, name, attrs, connection):
         self.stack.append(name)
         if name.endswith(self.list_marker):
-            l = ListElement(self.connection, name, self.list_marker)
-            self[pythonize_name(name)] = l
+            l = ListElement(self.connection, name, self.list_marker,
+                            self.item_marker)
+            self[name] = l
             return l
         if len(self.stack) > 0:
             element_name = self.stack[-1]
-            e = Element(self.connection, element_name, self.stack, self, self.list_marker)
-            self[pythonize_name(element_name)] = e
+            e = Element(self.connection, element_name, self.stack, self,
+                        self.list_marker, self.item_marker)
+            self[element_name] = e
             return (element_name, e)
         else:
             return None
@@ -106,14 +100,14 @@ class Element(dict):
         value = value.strip()
         if value:
             if isinstance(self.parent, Element):
-                self.parent[pythonize_name(name)] = value
+                self.parent[name] = value
             elif isinstance(self.parent, ListElement):
                 self.parent.append(value)
 
 class ListElement(list):
 
     def __init__(self, connection=None, element_name=None,
-                 list_marker='Set', item_marker='member'):
+                 list_marker='Set', item_marker=('member', 'item')):
         list.__init__(self)
         self.connection = connection
         self.element_name = element_name
@@ -122,10 +116,10 @@ class ListElement(list):
 
     def startElement(self, name, attrs, connection):
         if name.endswith(self.list_marker):
-            l = ListElement(self.connection, name)
-            setattr(self, pythonize_name(name), l)
+            l = ListElement(self.connection, name, self.item_marker)
+            setattr(self, name, l)
             return l
-        elif name == self.item_marker:
+        elif name in self.item_marker:
             e = Element(self.connection, name, parent=self)
             self.append(e)
             return e
@@ -143,4 +137,4 @@ class ListElement(list):
                 for e in empty:
                     self.remove(e)
         else:
-            setattr(self, pythonize_name(name), value)
+            setattr(self, name, value)
