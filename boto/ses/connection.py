@@ -57,7 +57,7 @@ class SESConnection(AWSAuthConnection):
         :type label: string
         :param label: The parameter list's name
         """
-        if isinstance(items, str):
+        if isinstance(items, basestring):
             items = [items]
         for i in range(1, len(items) + 1):
             params['%s.%d' % (label, i)] = items[i - 1]
@@ -73,9 +73,15 @@ class SESConnection(AWSAuthConnection):
         :param params: Parameters that will be sent as POST data with the API
                        call.
         """
-        headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        ct = 'application/x-www-form-urlencoded; charset=UTF-8'
+        headers = {'Content-Type': ct}
         params = params or {}
         params['Action'] = action
+
+        for k, v in params.items():
+            if isinstance(v, basestring):
+                params[k] = v.encode('utf-8')
+            
         response = super(SESConnection, self).make_request(
             'POST',
             '/',
@@ -96,7 +102,8 @@ class SESConnection(AWSAuthConnection):
 
 
     def send_email(self, source, subject, body, to_addresses, cc_addresses=None,
-                   bcc_addresses=None, format='text'):
+                   bcc_addresses=None, format='text', reply_addresses=None,
+                   return_path=None, text_body=None, html_body=None):
         """Composes an email message based on input data, and then immediately
         queues the message for sending.
 
@@ -123,17 +130,50 @@ class SESConnection(AWSAuthConnection):
         :param format: The format of the message's body, must be either "text"
                        or "html".
 
+        :type reply_addresses: list of strings or string
+        :param reply_addresses: The reply-to email address(es) for the 
+                                message. If the recipient replies to the 
+                                message, each reply-to address will 
+                                receive the reply.
+
+        :type return_path: string
+        :param return_path: The email address to which bounce notifications are 
+                            to be forwarded. If the message cannot be delivered 
+                            to the recipient, then an error message will be 
+                            returned from the recipient's ISP; this message will
+                            then be forwarded to the email address specified by 
+                            the ReturnPath parameter.
+
+        :type text_body: string
+        :param text_body: The text body to send with this email.
+
+        :type html_body: string
+        :param html_body: The html body to send with this email.
+
         """
+        if body is not None:
+            if format == "text":
+                if text_body is not None:
+                    raise Warning("You've passed in both a body and a text_body; please choose one or the other.")
+                text_body = body
+            else:
+                if html_body is not None:
+                    raise Warning("You've passed in both a body and an html_body; please choose one or the other.")
+                html_body = body
+
         params = {
             'Source': source,
             'Message.Subject.Data': subject,
         }
 
+        if return_path:
+            params['ReturnPath'] = return_path
+
         format = format.lower().strip()
-        if format == 'html':
-            params['Message.Body.Html.Data'] = body
-        elif format == 'text':
-            params['Message.Body.Text.Data'] = body
+        if html_body is not None:
+            params['Message.Body.Html.Data'] = html_body
+        if text_body is not None:
+            params['Message.Body.Text.Data'] = text_body
         else:
             raise ValueError("'format' argument must be 'text' or 'html'")
 
@@ -146,6 +186,10 @@ class SESConnection(AWSAuthConnection):
         if bcc_addresses:
             self._build_list_params(params, bcc_addresses,
                                    'Destination.BccAddresses.member')
+
+        if reply_addresses:
+            self._build_list_params(params, reply_addresses,
+                                   'ReplyToAddresses.member')
 
         return self._make_request('SendEmail', params)
 
@@ -179,8 +223,9 @@ class SESConnection(AWSAuthConnection):
             'RawMessage.Data': base64.b64encode(raw_message),
         }
 
-        self._build_list_params(params, destinations,
-                               'Destinations.member')
+        if destinations:
+            self._build_list_params(params, destinations,
+                                   'Destinations.member')
 
         return self._make_request('SendRawEmail', params)
 

@@ -35,6 +35,7 @@ RegionData = {
     'us-east-1' : 'elasticloadbalancing.us-east-1.amazonaws.com',
     'us-west-1' : 'elasticloadbalancing.us-west-1.amazonaws.com',
     'eu-west-1' : 'elasticloadbalancing.eu-west-1.amazonaws.com',
+    'ap-northeast-1' : 'elasticloadbalancing.ap-northeast-1.amazonaws.com',
     'ap-southeast-1' : 'elasticloadbalancing.ap-southeast-1.amazonaws.com'}
 
 def regions():
@@ -52,20 +53,20 @@ def regions():
         regions.append(region)
     return regions
 
-def connect_to_region(region_name):
+def connect_to_region(region_name, **kw_params):
     """
-    Given a valid region name, return a 
+    Given a valid region name, return a
     :class:`boto.ec2.elb.ELBConnection`.
-    
+
     :param str region_name: The name of the region to connect to.
-    
+
     :rtype: :class:`boto.ec2.ELBConnection` or ``None``
     :return: A connection to the given region, or None if an invalid region
         name is given
     """
     for region in regions():
         if region.name == region_name:
-            return region.connect()
+            return region.connect(**kw_params)
     return None
 
 class ELBConnection(AWSQueryConnection):
@@ -313,7 +314,7 @@ class ELBConnection(AWSQueryConnection):
         """
         params = {'LoadBalancerName' : load_balancer_name}
         if instances:
-            self.build_list_params(params, instances, 'Instances.member.%d')
+            self.build_list_params(params, instances, 'Instances.member.%d.InstanceId')
         return self.get_list('DescribeInstanceHealth', params, [('member', InstanceState)])
 
     def configure_health_check(self, name, health_check):

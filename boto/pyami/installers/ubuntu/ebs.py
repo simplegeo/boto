@@ -45,6 +45,7 @@ Config file section::
 """
 import boto
 from boto.manage.volume import Volume
+from boto.exception import EC2ResponseError
 import os, time
 from boto.pyami.installers.ubuntu.installer import Installer
 from string import Template
@@ -60,7 +61,7 @@ class Backup(ScriptBase):
     def main(self):
         try:
             ec2 = boto.connect_ec2()
-            self.run("/usr/sbin/xfs_freeze -f ${mount_point}")
+            self.run("/usr/sbin/xfs_freeze -f ${mount_point}", exit_on_error = True)
             snapshot = ec2.create_snapshot('${volume_id}')
             boto.log.info("Snapshot created: %s " %  snapshot)
         except Exception, e:
@@ -86,6 +87,15 @@ for v in Volume.all():
     v.trim_snapshots(True)
 """
     
+TagBasedBackupCleanupScript= """#!/usr/bin/env python
+import boto
+
+# Cleans Backups of EBS volumes
+
+ec2 = boto.connect_ec2()
+ec2.trim_snapshots()
+"""
+
 class EBSInstaller(Installer):
     """
     Set up the EBS stuff
@@ -147,9 +157,12 @@ class EBSInstaller(Installer):
         fp.close()
         self.run('chmod +x /usr/local/bin/ebs_backup')
 
-    def create_backup_cleanup_script(self):
+    def create_backup_cleanup_script(self, use_tag_based_cleanup = False):
         fp = open('/usr/local/bin/ebs_backup_cleanup', 'w')
-        fp.write(BackupCleanupScript)
+        if use_tag_based_cleanup:
+            fp.write(TagBasedBackupCleanupScript)
+        else:
+            fp.write(BackupCleanupScript)
         fp.close()
         self.run('chmod +x /usr/local/bin/ebs_backup_cleanup')
 
@@ -207,7 +220,12 @@ class EBSInstaller(Installer):
         minute = boto.config.get('EBS', 'backup_cleanup_cron_minute')
         hour = boto.config.get('EBS', 'backup_cleanup_cron_hour')
         if (minute != None) and (hour != None):
-            self.create_backup_cleanup_script();
+            # Snapshot clean up can either be done via the manage module, or via the new tag based
+            # snapshot code, if the snapshots have been tagged with the name of the associated 
+            # volume. Check for the presence of the new configuration flag, and use the appropriate
+            # cleanup method / script:
+            use_tag_based_cleanup = boto.config.has_option('EBS', 'use_tag_based_snapshot_cleanup')
+            self.create_backup_cleanup_script(use_tag_based_cleanup);
             self.add_cron("ebs_backup_cleanup", "/usr/local/bin/ebs_backup_cleanup", minute=minute, hour=hour)
 
         # Set up the fstab

@@ -228,8 +228,9 @@ class MTurkConnection(AWSQueryConnection):
         Change the HIT type of an existing HIT. Note that the reward associated
         with the new HIT type must match the reward of the current HIT type in
         order for the operation to be valid.
-        \thit_id is a string
-        \thit_type is a string
+        
+        :type hit_id: str
+        :type hit_type: str
         """
         params = {'HITId' : hit_id,
                   'HITTypeId': hit_type}
@@ -515,9 +516,9 @@ class MTurkConnection(AWSQueryConnection):
         """
         Send a text message to workers.
         """
-        params = {'WorkerId' : worker_ids,
-                  'Subject' : subject,
+        params = {'Subject' : subject,
                   'MessageText': message_text}
+        self.build_list_params(params, worker_ids, 'WorkerId')
 
         return self._process_request('NotifyWorkers', params)
 
@@ -579,7 +580,7 @@ class MTurkConnection(AWSQueryConnection):
             params['Test'] = test.get_as_xml()
 
         if test_duration is not None:
-            params['TestDuration'] = test_duration
+            params['TestDurationInSeconds'] = test_duration
 
         if answer_key is not None:
             if isinstance(answer_key, basestring):

@@ -203,6 +203,17 @@ class AWSAuthConnection(object):
         else:
             self.port = PORTS_BY_SECURITY[is_secure]
 
+        # Timeout used to tell httplib how long to wait for socket timeouts.
+        # Default is to leave timeout unchanged, which will in turn result in
+        # the socket's default global timeout being used. To specify a
+        # timeout, set http_socket_timeout in Boto config. Regardless,
+        # timeouts will only be applied if Python is 2.6 or greater.
+        self.http_connection_kwargs = {}
+        if (sys.version_info[0], sys.version_info[1]) >= (2, 6):
+            if config.has_option('Boto', 'http_socket_timeout'):
+                timeout = config.getint('Boto', 'http_socket_timeout')
+                self.http_connection_kwargs['timeout'] = timeout
+
         self.provider = Provider(provider,
                                  aws_access_key_id,
                                  aws_secret_access_key)
@@ -334,16 +345,20 @@ class AWSAuthConnection(object):
         if host is None:
             host = self.server_name()
         if is_secure:
-            boto.log.debug('establishing HTTPS connection')
+            boto.log.debug('establishing HTTPS connection: kwargs=%s' %
+                    self.http_connection_kwargs)
             if self.use_proxy:
                 connection = self.proxy_ssl()
             elif self.https_connection_factory:
                 connection = self.https_connection_factory(host)
             else:
-                connection = httplib.HTTPSConnection(host)
+                connection = httplib.HTTPSConnection(host,
+                        **self.http_connection_kwargs)
         else:
-            boto.log.debug('establishing HTTP connection')
-            connection = httplib.HTTPConnection(host)
+            boto.log.debug('establishing HTTP connection: kwargs=%s' %
+                    self.http_connection_kwargs)
+            connection = httplib.HTTPConnection(host,
+                    **self.http_connection_kwargs)
         if self.debug > 1:
             connection.set_debuglevel(self.debug)
         # self.connection must be maintained for backwards-compatibility
@@ -565,7 +580,8 @@ class AWSQueryConnection(AWSAuthConnection):
         http_request = self.build_base_http_request(verb, path, None,
                                                     params, {}, '',
                                                     self.server_name())
-        http_request.params['Action'] = action
+        if action:
+            http_request.params['Action'] = action
         http_request.params['Version'] = self.APIVersion
         http_request = self.fill_in_auth(http_request)
         return self._send_http_request(http_request)
@@ -584,7 +600,10 @@ class AWSQueryConnection(AWSAuthConnection):
         response = self.make_request(action, params, path, verb)
         body = response.read()
         boto.log.debug(body)
-        if response.status == 200:
+        if not body:
+            boto.log.error('Null body %s' % body)
+            raise self.ResponseError(response.status, response.reason, body)
+        elif response.status == 200:
             rs = ResultSet(markers)
             h = handler.XmlHandler(rs, parent)
             xml.sax.parseString(body, h)
@@ -600,7 +619,10 @@ class AWSQueryConnection(AWSAuthConnection):
         response = self.make_request(action, params, path, verb)
         body = response.read()
         boto.log.debug(body)
-        if response.status == 200:
+        if not body:
+            boto.log.error('Null body %s' % body)
+            raise self.ResponseError(response.status, response.reason, body)
+        elif response.status == 200:
             obj = cls(parent)
             h = handler.XmlHandler(obj, parent)
             xml.sax.parseString(body, h)
@@ -616,7 +638,10 @@ class AWSQueryConnection(AWSAuthConnection):
         response = self.make_request(action, params, path, verb)
         body = response.read()
         boto.log.debug(body)
-        if response.status == 200:
+        if not body:
+            boto.log.error('Null body %s' % body)
+            raise self.ResponseError(response.status, response.reason, body)
+        elif response.status == 200:
             rs = ResultSet()
             h = handler.XmlHandler(rs, parent)
             xml.sax.parseString(body, h)

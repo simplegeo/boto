@@ -55,7 +55,7 @@ from boto.exception import EC2ResponseError
 
 class EC2Connection(AWSQueryConnection):
 
-    APIVersion = boto.config.get('Boto', 'ec2_version', '2010-08-31')
+    APIVersion = boto.config.get('Boto', 'ec2_version', '2011-01-01')
     DefaultRegionName = boto.config.get('Boto', 'ec2_region_name', 'us-east-1')
     DefaultRegionEndpoint = boto.config.get('Boto', 'ec2_region_endpoint',
                                             'ec2.amazonaws.com')
@@ -64,7 +64,8 @@ class EC2Connection(AWSQueryConnection):
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None,
                  is_secure=True, host=None, port=None, proxy=None, proxy_port=None,
                  proxy_user=None, proxy_pass=None, debug=0,
-                 https_connection_factory=None, region=None, path='/'):
+                 https_connection_factory=None, region=None, path='/',
+                 api_version=None):
         """
         Init method to create a new connection to EC2.
 
@@ -81,6 +82,8 @@ class EC2Connection(AWSQueryConnection):
                                     proxy_user, proxy_pass,
                                     self.region.endpoint, debug,
                                     https_connection_factory, path)
+        if api_version:
+            self.APIVersion = api_version
 
     def _required_auth_capability(self):
         return ['ec2']
@@ -507,12 +510,9 @@ class EC2Connection(AWSQueryConnection):
 
         :type instance_initiated_shutdown_behavior: string
         :param instance_initiated_shutdown_behavior: Specifies whether the
-                                                     instance's EBS volumes are
-                                                     stopped (i.e. detached) or
-                                                     terminated (i.e. deleted)
-                                                     when the instance is
-                                                     shutdown by the
-                                                     owner.  Valid values are:
+                                                     instance stops or terminates on
+                                                     instance-initiated shutdown.
+                                                     Valid values are:
                                                      
                                                      * stop
                                                      * terminate
@@ -1392,7 +1392,8 @@ class EC2Connection(AWSQueryConnection):
                 temp.append(t)
 
         target_backup_times = temp
-        target_backup_times.reverse() # make the oldest date first
+        target_backup_times.sort() # make the oldeest dates first, and make sure the month start and last four week's
+                                   # start are in the proper order
 
         # get all the snapshots, sort them by date and time, and organize them into one array for each volume:
         all_snapshots = self.get_all_snapshots(owner = 'self')
@@ -1428,8 +1429,11 @@ class EC2Connection(AWSQueryConnection):
                         if snap_found_for_this_time_period == True:
                             if not snap.tags.get('preserve_snapshot'):
                                 # as long as the snapshot wasn't marked with the 'preserve_snapshot' tag, delete it:
-                                self.delete_snapshot(snap.id)
-                                boto.log.info('Trimmed snapshot %s (%s)' % (snap.tags['Name'], snap.start_time))
+                                try:
+                                    self.delete_snapshot(snap.id)
+                                    boto.log.info('Trimmed snapshot %s (%s)' % (snap.tags['Name'], snap.start_time))
+                                except EC2ResponseError:
+                                    boto.log.error('Attempt to trim snapshot %s (%s) failed. Possible result of a race condition with trimming on another server?' % (snap.tags['Name'], snap.start_time))
                             # go on and look at the next snapshot, leaving the time period alone
                         else:
                             # this was the first snapshot found for this time period. Leave it alone and look at the 
@@ -1688,16 +1692,16 @@ class EC2Connection(AWSQueryConnection):
         params = {'GroupName':name}
         return self.get_status('DeleteSecurityGroup', params, verb='POST')
 
-    def _authorize_deprecated(self, group_name, src_security_group_name=None,
-                              src_security_group_owner_id=None):
+    def authorize_security_group_deprecated(self, group_name,
+                                            src_security_group_name=None,
+                                            src_security_group_owner_id=None,
+                                            ip_protocol=None,
+                                            from_port=None, to_port=None,
+                                            cidr_ip=None):
         """
-        This method is called only when someone tries to authorize a group
-        without specifying a from_port or to_port.  Until recently, that was
-        the only way to do group authorization but the EC2 API has been
-        changed to now require a from_port and to_port when specifying a
-        group.  This is a much better approach but I don't want to break
-        existing boto applications that depend on the old behavior, hence
-        this kludge.
+        NOTE: This method uses the old-style request parameters
+              that did not allow a port to be specified when
+              authorizing a group.
 
         :type group_name: string
         :param group_name: The name of the security group you are adding
@@ -1711,17 +1715,36 @@ class EC2Connection(AWSQueryConnection):
         :param src_security_group_owner_id: The ID of the owner of the security
                                             group you are granting access to.
 
+        :type ip_protocol: string
+        :param ip_protocol: Either tcp | udp | icmp
+
+        :type from_port: int
+        :param from_port: The beginning port number you are enabling
+
+        :type to_port: int
+        :param to_port: The ending port number you are enabling
+
+        :type to_port: string
+        :param to_port: The CIDR block you are providing access to.
+                        See http://goo.gl/Yj5QC
+
         :rtype: bool
         :return: True if successful.
         """
-        warnings.warn('FromPort and ToPort now required for group authorization',
-                      DeprecationWarning)
         params = {'GroupName':group_name}
         if src_security_group_name:
             params['SourceSecurityGroupName'] = src_security_group_name
         if src_security_group_owner_id:
             params['SourceSecurityGroupOwnerId'] = src_security_group_owner_id
-        return self.get_status('AuthorizeSecurityGroupIngress', params, verb='POST')
+        if ip_protocol:
+            params['IpProtocol'] = ip_protocol
+        if from_port:
+            params['FromPort'] = from_port
+        if to_port:
+            params['ToPort'] = to_port
+        if cidr_ip:
+            params['CidrIp'] = cidr_ip
+        return self.get_status('AuthorizeSecurityGroupIngress', params)
 
     def authorize_security_group(self, group_name, src_security_group_name=None,
                                  src_security_group_owner_id=None,
@@ -1757,21 +1780,23 @@ class EC2Connection(AWSQueryConnection):
 
         :type cidr_ip: string
         :param cidr_ip: The CIDR block you are providing access to.
-                        See http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
+                        See http://goo.gl/Yj5QC
 
         :rtype: bool
         :return: True if successful.
         """
         if src_security_group_name:
             if from_port is None and to_port is None and ip_protocol is None:
-                return self._authorize_deprecated(group_name,
-                                                  src_security_group_name,
-                                                  src_security_group_owner_id)
+                return self.authorize_security_group_deprecated(
+                    group_name, src_security_group_name,
+                    src_security_group_owner_id)
         params = {'GroupName':group_name}
         if src_security_group_name:
-            params['IpPermissions.1.Groups.1.GroupName'] = src_security_group_name
+            param_name = 'IpPermissions.1.Groups.1.GroupName'
+            params[param_name] = src_security_group_name
         if src_security_group_owner_id:
-            params['IpPermissions.1.Groups.1.UserId'] = src_security_group_owner_id
+            param_name = 'IpPermissions.1.Groups.1.UserId'
+            params[param_name] = src_security_group_owner_id
         if ip_protocol:
             params['IpPermissions.1.IpProtocol'] = ip_protocol
         if from_port:
@@ -1780,43 +1805,69 @@ class EC2Connection(AWSQueryConnection):
             params['IpPermissions.1.ToPort'] = to_port
         if cidr_ip:
             params['IpPermissions.1.IpRanges.1.CidrIp'] = cidr_ip
-        return self.get_status('AuthorizeSecurityGroupIngress', params, verb='POST')
+        return self.get_status('AuthorizeSecurityGroupIngress',
+                               params, verb='POST')
 
-    def _revoke_deprecated(self, group_name, src_security_group_name=None,
-                           src_security_group_owner_id=None):
+    def revoke_security_group_deprecated(self, group_name,
+                                         src_security_group_name=None,
+                                         src_security_group_owner_id=None,
+                                         ip_protocol=None,
+                                         from_port=None, to_port=None,
+                                         cidr_ip=None):
         """
-        This method is called only when someone tries to revoke a group
-        without specifying a from_port or to_port.  Until recently, that was
-        the only way to do group revocation but the EC2 API has been
-        changed to now require a from_port and to_port when specifying a
-        group.  This is a much better approach but I don't want to break
-        existing boto applications that depend on the old behavior, hence
-        this kludge.
+        NOTE: This method uses the old-style request parameters
+              that did not allow a port to be specified when
+              authorizing a group.
+              
+        Remove an existing rule from an existing security group.
+        You need to pass in either src_security_group_name and
+        src_security_group_owner_id OR ip_protocol, from_port, to_port,
+        and cidr_ip.  In other words, either you are revoking another
+        group or you are revoking some ip-based rule.
 
         :type group_name: string
-        :param group_name: The name of the security group you are adding
-                           the rule to.
+        :param group_name: The name of the security group you are removing
+                           the rule from.
 
         :type src_security_group_name: string
         :param src_security_group_name: The name of the security group you are
-                                        granting access to.
+                                        revoking access to.
 
         :type src_security_group_owner_id: string
         :param src_security_group_owner_id: The ID of the owner of the security
-                                            group you are granting access to.
+                                            group you are revoking access to.
+
+        :type ip_protocol: string
+        :param ip_protocol: Either tcp | udp | icmp
+
+        :type from_port: int
+        :param from_port: The beginning port number you are disabling
+
+        :type to_port: int
+        :param to_port: The ending port number you are disabling
+
+        :type to_port: string
+        :param to_port: The CIDR block you are revoking access to.
+                        http://goo.gl/Yj5QC
 
         :rtype: bool
         :return: True if successful.
         """
-        warnings.warn('FromPort and ToPort now required for group authorization',
-                      DeprecationWarning)
         params = {'GroupName':group_name}
         if src_security_group_name:
             params['SourceSecurityGroupName'] = src_security_group_name
         if src_security_group_owner_id:
             params['SourceSecurityGroupOwnerId'] = src_security_group_owner_id
-        return self.get_status('RevokeSecurityGroupIngress', params, verb='POST')
-
+        if ip_protocol:
+            params['IpProtocol'] = ip_protocol
+        if from_port:
+            params['FromPort'] = from_port
+        if to_port:
+            params['ToPort'] = to_port
+        if cidr_ip:
+            params['CidrIp'] = cidr_ip
+        return self.get_status('RevokeSecurityGroupIngress', params)
+    
     def revoke_security_group(self, group_name, src_security_group_name=None,
                               src_security_group_owner_id=None,
                               ip_protocol=None, from_port=None, to_port=None,
@@ -1851,21 +1902,23 @@ class EC2Connection(AWSQueryConnection):
 
         :type cidr_ip: string
         :param cidr_ip: The CIDR block you are revoking access to.
-                        See http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
+                        See http://goo.gl/Yj5QC
 
         :rtype: bool
         :return: True if successful.
         """
         if src_security_group_name:
             if from_port is None and to_port is None and ip_protocol is None:
-                return self._revoke_deprecated(group_name,
-                                               src_security_group_name,
-                                               src_security_group_owner_id)
+                return self.revoke_security_group_deprecated(
+                    group_name, src_security_group_name,
+                    src_security_group_owner_id)
         params = {'GroupName':group_name}
         if src_security_group_name:
-            params['IpPermissions.1.Groups.1.GroupName'] = src_security_group_name
+            param_name = 'IpPermissions.1.Groups.1.GroupName'
+            params[param_name] = src_security_group_name
         if src_security_group_owner_id:
-            params['IpPermissions.1.Groups.1.UserId'] = src_security_group_owner_id
+            param_name = 'IpPermissions.1.Groups.1.UserId'
+            params[param_name] = src_security_group_owner_id
         if ip_protocol:
             params['IpPermissions.1.IpProtocol'] = ip_protocol
         if from_port:
@@ -1874,15 +1927,19 @@ class EC2Connection(AWSQueryConnection):
             params['IpPermissions.1.ToPort'] = to_port
         if cidr_ip:
             params['IpPermissions.1.IpRanges.1.CidrIp'] = cidr_ip
-        return self.get_status('RevokeSecurityGroupIngress', params, verb='POST')
+        return self.get_status('RevokeSecurityGroupIngress',
+                               params, verb='POST')
 
     #
     # Regions
     #
 
-    def get_all_regions(self, filters=None):
+    def get_all_regions(self, region_names=None, filters=None):
         """
         Get all available regions for the EC2 service.
+
+        :type region_names: list of str
+        :param region_names: Names of regions to limit output
 
         :type filters: dict
         :param filters: Optional filters that can be used to limit
@@ -1898,6 +1955,8 @@ class EC2Connection(AWSQueryConnection):
         :return: A list of :class:`boto.ec2.regioninfo.RegionInfo`
         """
         params = {}
+        if region_names:
+            self.build_list_params(params, region_names, 'RegionName')
         if filters:
             self.build_filter_params(params, filters)
         regions =  self.get_list('DescribeRegions', params, [('item', RegionInfo)], verb='POST')
@@ -2021,8 +2080,24 @@ class EC2Connection(AWSQueryConnection):
     # Monitoring
     #
 
+    def monitor_instances(self, instance_ids):
+        """
+        Enable CloudWatch monitoring for the supplied instances.
+
+        :type instance_id: list of strings
+        :param instance_id: The instance ids
+
+        :rtype: list
+        :return: A list of :class:`boto.ec2.instanceinfo.InstanceInfo`
+        """
+        params = {}
+        self.build_list_params(params, instance_ids, 'InstanceId')
+        return self.get_list('MonitorInstances', params,
+                             [('item', InstanceInfo)], verb='POST')
+
     def monitor_instance(self, instance_id):
         """
+        Deprecated Version, maintained for backward compatibility.
         Enable CloudWatch monitoring for the supplied instance.
 
         :type instance_id: string
@@ -2031,12 +2106,26 @@ class EC2Connection(AWSQueryConnection):
         :rtype: list
         :return: A list of :class:`boto.ec2.instanceinfo.InstanceInfo`
         """
-        params = {'InstanceId' : instance_id}
-        return self.get_list('MonitorInstances', params,
+        return self.monitor_instances([instance_id])
+
+    def unmonitor_instances(self, instance_ids):
+        """
+        Disable CloudWatch monitoring for the supplied instance.
+
+        :type instance_id: list of string
+        :param instance_id: The instance id
+
+        :rtype: list
+        :return: A list of :class:`boto.ec2.instanceinfo.InstanceInfo`
+        """
+        params = {}
+        self.build_list_params(params, instance_ids, 'InstanceId')
+        return self.get_list('UnmonitorInstances', params,
                              [('item', InstanceInfo)], verb='POST')
 
     def unmonitor_instance(self, instance_id):
         """
+        Deprecated Version, maintained for backward compatibility.
         Disable CloudWatch monitoring for the supplied instance.
 
         :type instance_id: string
@@ -2045,9 +2134,7 @@ class EC2Connection(AWSQueryConnection):
         :rtype: list
         :return: A list of :class:`boto.ec2.instanceinfo.InstanceInfo`
         """
-        params = {'InstanceId' : instance_id}
-        return self.get_list('UnmonitorInstances', params,
-                             [('item', InstanceInfo)], verb='POST')
+        return self.unmonitor_instances([instance_id])
 
     # 
     # Bundle Windows Instances
@@ -2079,11 +2166,13 @@ class EC2Connection(AWSQueryConnection):
                   'Storage.S3.Bucket' : s3_bucket,
                   'Storage.S3.Prefix' : s3_prefix,
                   'Storage.S3.UploadPolicy' : s3_upload_policy}
-        s3auth = boto.auth.get_auth_handler(None, boto.config, self.provider, ['s3'])
+        s3auth = boto.auth.get_auth_handler(None, boto.config,
+                                            self.provider, ['s3'])
         params['Storage.S3.AWSAccessKeyId'] = self.aws_access_key_id
         signature = s3auth.sign_string(s3_upload_policy)
         params['Storage.S3.UploadPolicySignature'] = signature
-        return self.get_object('BundleInstance', params, BundleInstanceTask, verb='POST') 
+        return self.get_object('BundleInstance', params,
+                               BundleInstanceTask, verb='POST') 
 
     def get_all_bundle_tasks(self, bundle_ids=None, filters=None):
         """
@@ -2123,7 +2212,8 @@ class EC2Connection(AWSQueryConnection):
         """                        
 
         params = {'BundleId' : bundle_id}
-        return self.get_object('CancelBundleTask', params, BundleInstanceTask, verb='POST')
+        return self.get_object('CancelBundleTask', params,
+                               BundleInstanceTask, verb='POST')
 
     def get_password_data(self, instance_id):
         """
@@ -2211,8 +2301,9 @@ class EC2Connection(AWSQueryConnection):
         for key in keys:
             value = tags[key]
             params['Tag.%d.Key'%i] = key
-            if value is not None:
-                params['Tag.%d.Value'%i] = value
+            if value is None:
+                value = ''
+            params['Tag.%d.Value'%i] = value
             i += 1
         
     def get_all_tags(self, tags=None, filters=None):
